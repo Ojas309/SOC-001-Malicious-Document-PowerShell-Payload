@@ -1,0 +1,1 @@
+# SOC-001-Malicious-Document-PowerShell-Payload
