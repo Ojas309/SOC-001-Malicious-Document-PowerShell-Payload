@@ -1,0 +1,129 @@
+# SOC-001 — Malicious Document to PowerShell Attack
+
+## Incident Overview
+
+- Incident ID: SOC-001
+- Severity: High
+- Affected Host: PC-15
+- User: Rahul
+- Status: Contained / Under Investigation
+
+## Executive Summary
+
+A suspicious Microsoft Word document was opened by the user.
+The document triggered PowerShell execution, which downloaded an
+executable from an external IP address.
+
+The downloaded executable was then executed and established an
+outbound connection to the same external IP. Persistence was also
+created through a Windows Registry Run Key.
+
+The incident was classified as High severity because multiple
+stages of a potential attack were observed.
+
+## Attack Timeline
+
+| Time | Event |
+|---|---|
+| 10:00:01 | User opened Salary_Revision.docx |
+| 10:00:05 | winword.exe spawned powershell.exe |
+| 10:00:07 | PowerShell executed with ExecutionPolicy Bypass and hidden window |
+| 10:00:10 | PowerShell downloaded a.exe from 185.20.10.5 |
+| 10:00:15 | a.exe appeared in C:\Users\Public\a.exe |
+| 10:00:20 | a.exe connected to 185.20.10.5:443 |
+| 10:00:30 | Registry Run Key persistence was created |
+
+## Attack Chain
+
+Salary_Revision.docx
+        ↓
+winword.exe
+        ↓
+powershell.exe
+        ↓
+Invoke-WebRequest
+        ↓
+a.exe
+        ↓
+185.20.10.5:443
+        ↓
+Registry Run Key Persistence
+
+## Evidence
+
+### PowerShell
+
+The PowerShell process used:
+
+- ExecutionPolicy Bypass
+- Hidden window execution
+- Invoke-WebRequest
+
+### Payload
+
+File:
+
+C:\Users\Public\a.exe
+
+Source:
+
+185.20.10.5
+
+### Network
+
+a.exe established an outbound connection to:
+
+185.20.10.5:443
+
+### Persistence
+
+Registry:
+
+HKCU\...\Run
+
+The Run key referenced the downloaded executable.
+
+## MITRE ATT&CK Mapping
+
+| Technique | ID | Evidence |
+|---|---|---|
+| User Execution: Malicious File | T1204.002 | User opened suspicious document |
+| PowerShell | T1059.001 | Word spawned PowerShell |
+| Ingress Tool Transfer | T1105 | PowerShell downloaded a.exe |
+| Registry Run Keys / Startup Folder | T1547.001 | Run key persistence |
+
+## Severity Assessment
+
+### High
+
+The incident contains multiple correlated suspicious behaviors:
+
+1. Malicious document execution
+2. PowerShell execution
+3. ExecutionPolicy bypass
+4. Remote executable download
+5. Executable execution
+6. Outbound network connection
+7. Registry persistence
+
+The evidence indicates a likely compromise and requires containment
+and further investigation.
+
+## Response
+
+1. Preserve relevant evidence.
+2. Isolate PC-15 from the network.
+3. Investigate a.exe and its hash.
+4. Investigate the external IP address.
+5. Examine PowerShell logs and command history.
+6. Identify the source of Salary_Revision.docx.
+7. Search other endpoints for the same activity.
+8. Remove malicious files and persistence after evidence collection.
+9. Restore the system and monitor for recurring activity.
+
+## Investigation Limitations
+
+Data exfiltration has not been confirmed from the available evidence.
+The outbound connection to 185.20.10.5 indicates suspicious network
+activity, but additional network telemetry would be required to
+confirm whether sensitive data was transferred.
